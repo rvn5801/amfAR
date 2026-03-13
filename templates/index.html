@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>HIV/AIDS Policy Intelligence — amfAR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="/static/css/style.css"/>
@@ -20,76 +22,53 @@
     <span class="brand-tag">amfAR</span>
     <span class="brand-full">HIV/AIDS Intelligence</span>
   </div>
-
   <div class="sidebar-nav">
-    <button class="nav-item active" data-page="overview" onclick="showPage('overview',this)" title="Overview">
-      <span class="nav-icon">⬡</span>
-      <span class="nav-label">Overview</span>
-    </button>
-    <button class="nav-item" data-page="ehe" onclick="showPage('ehe',this)" title="EHE Tracker">
-      <span class="nav-icon">◎</span>
-      <span class="nav-label">EHE Tracker</span>
-    </button>
-    <button class="nav-item" data-page="funding" onclick="showPage('funding',this)" title="Funding Gap">
-      <span class="nav-icon">$</span>
-      <span class="nav-label">Funding Gap</span>
-    </button>
-    <button class="nav-item" data-page="simulator" onclick="showPage('simulator',this)" title="Epidemic Simulator">
-      <span class="nav-icon">⟳</span>
-      <span class="nav-label">Simulator</span>
-    </button>
-    <button class="nav-item" data-page="states" onclick="showPage('states',this)" title="State Explorer">
-      <span class="nav-icon">◫</span>
-      <span class="nav-label">State Explorer</span>
-    </button>
-    <button class="nav-item" data-page="policy" onclick="showPage('policy',this)" title="Policy Tools">
-      <span class="nav-icon">✦</span>
-      <span class="nav-label">Policy Tools</span>
-    </button>
-    <button class="nav-item" data-page="chat" onclick="showPage('chat',this)" title="Ask the Data">
-      <span class="nav-icon">◈</span>
-      <span class="nav-label">Ask the Data</span>
-    </button>
+    <button class="nav-item active" data-page="overview"   onclick="showPage('overview',this)"   title="Overview">   <span class="nav-icon">⬡</span><span class="nav-label">Overview</span></button>
+    <button class="nav-item"        data-page="map"        onclick="showPage('map',this)"        title="US Map">      <span class="nav-icon">◫</span><span class="nav-label">US Map</span></button>
+    <button class="nav-item"        data-page="disparity"  onclick="showPage('disparity',this)"  title="Disparity">   <span class="nav-icon">◑</span><span class="nav-label">Disparity Index</span></button>
+    <button class="nav-item"        data-page="forecast"   onclick="showPage('forecast',this)"   title="Forecast">    <span class="nav-icon">⟋</span><span class="nav-label">2030 Forecast</span></button>
+    <button class="nav-item"        data-page="ehe"        onclick="showPage('ehe',this)"        title="EHE Tracker"> <span class="nav-icon">◎</span><span class="nav-label">EHE Tracker</span></button>
+    <button class="nav-item"        data-page="funding"    onclick="showPage('funding',this)"    title="Funding Gap"> <span class="nav-icon">$</span><span class="nav-label">Funding Gap</span></button>
+    <button class="nav-item"        data-page="simulator"  onclick="showPage('simulator',this)"  title="Simulator">   <span class="nav-icon">⟳</span><span class="nav-label">Simulator</span></button>
+    <button class="nav-item"        data-page="states"     onclick="showPage('states',this)"     title="States">      <span class="nav-icon">▦</span><span class="nav-label">State Explorer</span></button>
+    <button class="nav-item"        data-page="policy"     onclick="showPage('policy',this)"     title="Policy Tools"><span class="nav-icon">✦</span><span class="nav-label">Policy Tools</span></button>
+    <button class="nav-item"        data-page="chat"       onclick="showPage('chat',this)"       title="AI Chat">     <span class="nav-icon">◈</span><span class="nav-label">Ask the Data</span></button>
   </div>
-
   <div class="sidebar-footer">
-    <button class="nav-item" onclick="generateFullReport()" title="Download Report">
-      <span class="nav-icon">⬇</span>
-      <span class="nav-label">Export PDF</span>
-    </button>
-    <div class="sidebar-data-tag">AIDSVu · 2014–2023</div>
+    <button class="nav-item theme-btn" onclick="toggleTheme()" title="Toggle theme"><span class="nav-icon" id="themeIcon">☀</span><span class="nav-label">Light Mode</span></button>
+    <button class="nav-item story-btn" onclick="startStory()"  title="Data Story">  <span class="nav-icon">▶</span><span class="nav-label">Tell the Story</span></button>
+    <button class="nav-item"           onclick="generateFullReport()" title="Export PDF"><span class="nav-icon">⬇</span><span class="nav-label" id="pdfLabel">Export PDF</span></button>
+    <div class="sidebar-data-tag">AIDSVu · CDC · 2014–2023</div>
   </div>
 </nav>
 
 <!-- ═══ MAIN CONTENT ═══ -->
 <div class="main-wrap" id="mainWrap">
-
-  <!-- ── TOP BAR ── -->
   <header class="topbar">
     <div class="topbar-left">
       <h1 class="page-title" id="pageTitle">Overview</h1>
-      <span class="page-sub" id="pageSub">United States HIV/AIDS Surveillance · Real CDC/AIDSVu Data</span>
+      <span class="page-sub"  id="pageSub">United States HIV/AIDS Surveillance · Real CDC/AIDSVu Data</span>
     </div>
-    <div class="topbar-stats" id="topbarStats">
+    <div class="topbar-stats">
       <div class="tstat"><span class="tstat-label">New Diagnoses</span><span class="tstat-value" id="val-diagnoses">—</span><span class="tstat-sub" id="val-yoy">—</span></div>
       <div class="tstat-div"></div>
       <div class="tstat"><span class="tstat-label">PrEP Users</span><span class="tstat-value" id="val-prep">—</span><span class="tstat-sub">Same year</span></div>
       <div class="tstat-div"></div>
       <div class="tstat"><span class="tstat-label">EHE Progress</span><span class="tstat-value" id="val-ehe">—</span><span class="tstat-sub">Toward 90% by 2030</span></div>
       <div class="tstat-div"></div>
-      <div class="tstat"><span class="tstat-label">Funding Gap</span><span class="tstat-value" id="val-gap">—</span><span class="tstat-sub">To reach EHE targets</span></div>
+      <div class="tstat"><span class="tstat-label">Funding Gap</span><span class="tstat-value" id="val-gap">—</span><span class="tstat-sub">Est. PrEP needed</span></div>
       <div class="tstat-div"></div>
       <div class="tstat"><span class="tstat-label">Data Year</span><span class="tstat-value" id="val-year">—</span><span class="tstat-sub">CDC NHSS</span></div>
     </div>
+    <div class="topbar-actions">
+      <button class="topbar-share-btn" onclick="copyShareLink()" title="Copy shareable link">⎘ Share</button>
+    </div>
   </header>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 1: OVERVIEW
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: OVERVIEW -->
   <section class="page active" id="page-overview">
     <div class="page-grid">
       <div class="col-wide">
-
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">National HIV Diagnosis Trend</h2>
@@ -100,117 +79,179 @@
           </div>
           <div class="chart-wrap h260"><canvas id="trendChart"></canvas></div>
         </div>
-
         <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">PrEP Uptake vs. New Diagnoses</h2>
-            <span class="panel-tag">Prevention Impact · 2014–2023</span>
-          </div>
+          <div class="panel-header"><h2 class="panel-title">PrEP Uptake vs. New Diagnoses</h2><span class="panel-tag">Prevention Impact · 2014–2023</span></div>
           <div class="chart-wrap h260"><canvas id="prepChart"></canvas></div>
         </div>
-
       </div>
       <div class="col-narrow">
-
-        <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">Transmission</h2><span class="panel-tag">Latest Year</span></div>
-          <div class="chart-wrap h180"><canvas id="transmissionChart"></canvas></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">Race / Ethnicity</h2><span class="panel-tag">New Diagnoses</span></div>
-          <div class="chart-wrap h180"><canvas id="raceChart"></canvas></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">Age Distribution</h2><span class="panel-tag">New Diagnoses</span></div>
-          <div class="chart-wrap h180"><canvas id="ageChart"></canvas></div>
-        </div>
-
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">Transmission</h2></div><div class="chart-wrap h180"><canvas id="transmissionChart"></canvas></div></div>
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">Race / Ethnicity</h2></div><div class="chart-wrap h180"><canvas id="raceChart"></canvas></div></div>
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">Age Distribution</h2></div><div class="chart-wrap h180"><canvas id="ageChart"></canvas></div></div>
       </div>
     </div>
-
-    <!-- AI Insights -->
-    <div class="section-header"><span class="ai-icon">◈</span><h2>AI Policy Insights</h2><span class="section-sub">Auto-generated from real data · GPT-4o-mini</span></div>
+    <div class="section-header"><span class="ai-icon">◈</span><h2>AI Policy Insights</h2><span class="section-sub">GPT-4o-mini · live data</span></div>
     <div class="insights-grid" id="insightsGrid">
-      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Analyzing trends…</p></div>
-      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Identifying disparities…</p></div>
-      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Mapping PrEP gaps…</p></div>
+      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Analyzing…</p></div>
+      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Analyzing…</p></div>
+      <div class="insight-card loading-card"><div class="loading-pulse"></div><p>Analyzing…</p></div>
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 2: EHE TRACKER
-  ══════════════════════════════════════════════════ -->
-  <section class="page" id="page-ehe">
-    <div class="ehe-hero">
-      <div class="ehe-hero-left">
-        <div class="ehe-kpi-row" id="eheKpiRow">
-          <div class="ehe-kpi"><div class="ehe-kpi-label">2017 Baseline</div><div class="ehe-kpi-value" id="eheBaselineCases">—</div></div>
-          <div class="ehe-kpi"><div class="ehe-kpi-label">Current Diagnoses</div><div class="ehe-kpi-value accent" id="eheCurrentCases">—</div></div>
-          <div class="ehe-kpi"><div class="ehe-kpi-label">2030 Target (−90%)</div><div class="ehe-kpi-value gold" id="eheTargetCases">—</div></div>
-          <div class="ehe-kpi"><div class="ehe-kpi-label">Goal Achieved</div><div class="ehe-kpi-value green" id="eheGoalPct">—</div></div>
+  <!-- PAGE: US CHOROPLETH MAP -->
+  <section class="page" id="page-map">
+    <div class="map-layout">
+      <div class="map-main">
+        <div class="panel" style="padding:1rem">
+          <div class="panel-header">
+            <h2 class="panel-title">HIV Diagnosis Rate by State</h2>
+            <div class="panel-controls">
+              <button class="toggle-btn active" id="mapMetricRate"   onclick="switchMapMetric('rate')">Rate/100k</button>
+              <button class="toggle-btn"        id="mapMetricCases"  onclick="switchMapMetric('cases')">Total Cases</button>
+              <button class="toggle-btn"        id="mapMetricPNR"    onclick="switchMapMetric('pnr')">PNR</button>
+            </div>
+          </div>
+          <div id="choroplethMap" style="width:100%;height:460px;"></div>
+          <div class="map-legend" id="mapLegend"></div>
         </div>
-        <div class="ehe-bar-section">
-          <div class="ehe-bar-label">Progress toward 90% reduction goal</div>
-          <div class="ehe-bar-track"><div class="ehe-bar-fill" id="eheBarFill"></div></div>
-          <div class="ehe-bar-ends"><span id="eheProgressLabel">Loading…</span><span>Goal: 90%</span></div>
+      </div>
+      <div class="map-sidebar">
+        <div class="panel" id="mapInfoPanel">
+          <div class="map-info-default">
+            <div class="map-info-icon">◫</div>
+            <p class="map-info-hint">Hover or click any state to see its HIV data profile</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Top 10 by Rate</h2></div>
+          <div id="mapRankList"></div>
         </div>
       </div>
     </div>
+  </section>
 
+  <!-- PAGE: DISPARITY INDEX -->
+  <section class="page" id="page-disparity">
+    <div class="disparity-hero" id="disparityHero">
+      <div class="dh-stat"><div class="dh-label">National B/W Rate Ratio</div><div class="dh-value" id="dispBWNational">—</div></div>
+      <div class="dh-div"></div>
+      <div class="dh-stat"><div class="dh-label">States w/ Ratio &gt; 5×</div><div class="dh-value" id="dispHighCount">—</div></div>
+      <div class="dh-div"></div>
+      <div class="dh-stat"><div class="dh-label">Worst Equity State</div><div class="dh-value" id="dispWorst">—</div></div>
+      <div class="dh-div"></div>
+      <div class="dh-stat"><div class="dh-label">Best Equity State</div><div class="dh-value" id="dispBest">—</div></div>
+    </div>
+    <div class="ai-commentary" id="disparityCommentary"></div>
     <div class="page-grid" style="margin-top:1.25rem">
       <div class="col-wide">
         <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">EHE Goal Progress Over Time</h2><span class="panel-tag">% of 90% reduction achieved vs on-track</span></div>
-          <div class="chart-wrap h300"><canvas id="eheChart"></canvas></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">National Diagnosis Trend vs EHE Milestones</h2><span class="panel-tag">Absolute cases with target line</span></div>
-          <div class="chart-wrap h260"><canvas id="eheTrendChart"></canvas></div>
+          <div class="panel-header"><h2 class="panel-title">Black/White Diagnosis Rate Ratio by State</h2><span class="panel-tag">Higher = worse equity · national avg shown</span></div>
+          <div class="chart-wrap h400"><canvas id="disparityChart"></canvas></div>
         </div>
       </div>
       <div class="col-narrow">
         <div class="panel">
-          <div class="panel-header"><h2 class="panel-title">Unmet PrEP Need</h2><span class="panel-tag">Lowest PNR States</span></div>
-          <div class="chart-wrap h200"><canvas id="pnrChart"></canvas></div>
+          <div class="panel-header"><h2 class="panel-title">Composite Disparity Score</h2><span class="panel-tag">Top 15 worst equity</span></div>
+          <div id="disparityTable"></div>
         </div>
-        <div class="panel panel-ehe-info">
-          <h3 class="info-title">About the EHE Initiative</h3>
-          <p class="info-text">The Ending the HIV Epidemic (EHE) initiative, launched in 2019, aims to reduce new HIV infections in the U.S. by 90% by 2030. It focuses on four pillars: Diagnose, Treat, Prevent, and Respond. The baseline year is 2017.</p>
-          <div class="info-pills">
-            <span class="info-pill diagnose">Diagnose</span>
-            <span class="info-pill treat">Treat</span>
-            <span class="info-pill prevent">Prevent</span>
-            <span class="info-pill respond">Respond</span>
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Rate Scatter</h2><span class="panel-tag">Black rate vs White rate</span></div>
+          <div class="chart-wrap h220"><canvas id="disparityScatter"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: 2030 FORECAST -->
+  <section class="page" id="page-forecast">
+    <div class="forecast-hero" id="forecastHero">
+      <div class="fh-stat"><div class="fh-label">Current (Latest Year)</div><div class="fh-value" id="fcCurrent">—</div></div>
+      <div class="fh-div"></div>
+      <div class="fh-stat"><div class="fh-label">Forecast 2030</div><div class="fh-value accent" id="fc2030">—</div></div>
+      <div class="fh-div"></div>
+      <div class="fh-stat"><div class="fh-label">EHE Target 2030</div><div class="fh-value gold" id="fcTarget">—</div></div>
+      <div class="fh-div"></div>
+      <div class="fh-stat"><div class="fh-label">On Track for EHE?</div><div class="fh-value" id="fcOnTrack">—</div></div>
+    </div>
+    <div class="page-grid" style="margin-top:1.25rem">
+      <div class="col-wide">
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">National Trend + ML Forecast to 2030</h2><span class="panel-tag">Linear regression · 80% & 95% confidence bands</span></div>
+          <div class="chart-wrap h320"><canvas id="forecastChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">State Trajectories</h2><span class="panel-tag">Most improving vs most worsening</span></div>
+          <div class="forecast-state-grid" id="forecastStateGrid"></div>
+        </div>
+      </div>
+      <div class="col-narrow">
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">EHE Gap Analysis</h2></div>
+          <div class="chart-wrap h240"><canvas id="forecastGapChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Forecast Methodology</h2></div>
+          <div class="method-notes">
+            <p>Linear regression fit on 2014–2023 CDC surveillance data. Confidence bands derived from residual standard error.</p>
+            <p style="margin-top:.6rem">State forecasts use per-state linear trends. States with &lt;3 data points excluded.</p>
+            <p style="margin-top:.6rem"><strong>Disclaimer:</strong> Forecasts assume current trajectory continues. Policy changes, new interventions, or epidemiological shifts will alter outcomes.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 3: FUNDING GAP
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: EHE TRACKER -->
+  <section class="page" id="page-ehe">
+    <div class="ehe-hero">
+      <div class="ehe-kpi-row" id="eheKpiRow">
+        <div class="ehe-kpi"><div class="ehe-kpi-label">2017 Baseline</div><div class="ehe-kpi-value" id="eheBaselineCases">—</div></div>
+        <div class="ehe-kpi"><div class="ehe-kpi-label">Current Diagnoses</div><div class="ehe-kpi-value accent" id="eheCurrentCases">—</div></div>
+        <div class="ehe-kpi"><div class="ehe-kpi-label">2030 Target (−90%)</div><div class="ehe-kpi-value gold" id="eheTargetCases">—</div></div>
+        <div class="ehe-kpi"><div class="ehe-kpi-label">Goal Achieved</div><div class="ehe-kpi-value green" id="eheGoalPct">—</div></div>
+      </div>
+      <div class="ehe-bar-section">
+        <div class="ehe-bar-label">Progress toward 90% reduction goal</div>
+        <div class="ehe-bar-track"><div class="ehe-bar-fill" id="eheBarFill"></div></div>
+        <div class="ehe-bar-ends"><span id="eheProgressLabel">Loading…</span><span>Goal: 90%</span></div>
+      </div>
+    </div>
+    <div class="page-grid" style="margin-top:1.25rem">
+      <div class="col-wide">
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">EHE Goal Progress Over Time</h2></div><div class="chart-wrap h300"><canvas id="eheChart"></canvas></div></div>
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">Actual Diagnoses vs EHE Target</h2></div><div class="chart-wrap h260"><canvas id="eheTrendChart"></canvas></div></div>
+      </div>
+      <div class="col-narrow">
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">Unmet PrEP Need</h2></div><div class="chart-wrap h200"><canvas id="pnrChart"></canvas></div></div>
+        <div class="panel panel-ehe-info">
+          <h3 class="info-title">About EHE</h3>
+          <p class="info-text">Launched 2019. Goal: 90% reduction in new HIV infections by 2030. Four pillars:</p>
+          <div class="info-pills"><span class="info-pill diagnose">Diagnose</span><span class="info-pill treat">Treat</span><span class="info-pill prevent">Prevent</span><span class="info-pill respond">Respond</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: FUNDING GAP -->
   <section class="page" id="page-funding">
-    <div class="funding-summary-bar" id="fundingSummaryBar">
-      <div class="fsb-item"><div class="fsb-label">Total National Funding Gap</div><div class="fsb-value" id="fsbTotal">—</div></div>
+    <div class="funding-summary-bar">
+      <div class="fsb-item"><div class="fsb-label">Total National Gap</div><div class="fsb-value" id="fsbTotal">—</div></div>
       <div class="fsb-div"></div>
-      <div class="fsb-item"><div class="fsb-label">Additional PrEP Patients Needed</div><div class="fsb-value" id="fsbPatients">—</div></div>
+      <div class="fsb-item"><div class="fsb-label">Additional PrEP Patients</div><div class="fsb-value" id="fsbPatients">—</div></div>
       <div class="fsb-div"></div>
-      <div class="fsb-item"><div class="fsb-label">Cost Assumption</div><div class="fsb-value">$4,200<span style="font-size:0.7rem;font-weight:400">/patient/yr</span></div></div>
+      <div class="fsb-item"><div class="fsb-label">Cost / Patient / Year</div><div class="fsb-value">$4,200</div></div>
       <div class="fsb-div"></div>
-      <div class="fsb-item"><div class="fsb-label">Methodology</div><div class="fsb-value" style="font-size:0.8rem">CDC Generic PrEP</div></div>
+      <div class="fsb-item"><div class="fsb-label">Methodology</div><div class="fsb-value" style="font-size:.8rem">CDC Generic PrEP</div></div>
     </div>
     <div class="funding-grid" id="fundingGrid"><div class="loading-row">Calculating…</div></div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 4: EPIDEMIC SIMULATOR
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: SIMULATOR -->
   <section class="page" id="page-simulator">
     <div class="sim-hero">
       <div class="sim-hero-inner">
         <h2 class="sim-hero-title">PrEP Expansion Impact Simulator</h2>
-        <p class="sim-hero-sub">Model how increasing PrEP coverage changes the trajectory of new HIV infections · Evidence-based CDC methodology</p>
+        <p class="sim-hero-sub">Evidence-based CDC methodology · each 10% PrEP increase → ~4.4% incidence reduction</p>
         <div class="sim-controls">
           <div class="sim-slider-group">
             <label class="sim-label">PrEP Coverage Increase: <strong id="prepPctLabel">20%</strong></label>
@@ -226,37 +267,22 @@
         </div>
       </div>
     </div>
-
     <div class="sim-results" id="simResults" style="display:none">
       <div class="sim-kpis" id="simStats"></div>
-      <div class="panel" style="margin-top:1.25rem">
-        <div class="panel-header"><h2 class="panel-title">Projected Trajectory</h2><span class="panel-tag" id="simChartTag">Diagnoses + PrEP Users</span></div>
-        <div class="chart-wrap h280"><canvas id="simChart"></canvas></div>
-      </div>
+      <div class="panel" style="margin-top:1.25rem"><div class="panel-header"><h2 class="panel-title">Projected Trajectory</h2><span class="panel-tag" id="simChartTag"></span></div><div class="chart-wrap h280"><canvas id="simChart"></canvas></div></div>
       <div class="sim-commentary" id="simCommentary"></div>
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 5: STATE EXPLORER
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: STATE EXPLORER -->
   <section class="page" id="page-states">
     <div class="state-explorer-grid">
       <div class="col-wide">
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">HIV Diagnosis Rate by State</h2>
-            <span class="panel-tag">Per 100k · Click any bar for full state profile</span>
-          </div>
-          <div class="chart-wrap h500"><canvas id="stateChart"></canvas></div>
-        </div>
+        <div class="panel"><div class="panel-header"><h2 class="panel-title">HIV Diagnosis Rate by State</h2><span class="panel-tag">Click any bar for full profile</span></div><div class="chart-wrap h500"><canvas id="stateChart"></canvas></div></div>
       </div>
       <div class="col-narrow">
-        <div class="panel" style="height:100%">
-          <div class="panel-header">
-            <h2 class="panel-title">Compare Two States</h2>
-            <span class="panel-tag">Side-by-side + AI commentary</span>
-          </div>
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title">Compare Two States</h2></div>
           <div class="compare-controls-inline">
             <select class="state-select" id="selectA"><option value="">State A…</option></select>
             <span class="vs-label">VS</span>
@@ -265,8 +291,10 @@
           </div>
           <div class="compare-inline-results" id="compareInlineResults" style="display:none">
             <div id="compareHeaderRow"></div>
-            <div style="margin-top:1rem"><h3 class="modal-chart-title">Diagnosis Trend</h3><canvas id="compareTrendChart" height="130"></canvas></div>
-            <div style="margin-top:1rem"><h3 class="modal-chart-title">Rate per 100k</h3><canvas id="compareRateChart" height="130"></canvas></div>
+            <div class="compare-charts-row">
+              <div class="compare-chart-box"><h3>Diagnosis Trend</h3><canvas id="compareTrendChart"></canvas></div>
+              <div class="compare-chart-box"><h3>Rate per 100k</h3><canvas id="compareRateChart"></canvas></div>
+            </div>
             <div class="compare-commentary" id="compareCommentary"></div>
           </div>
         </div>
@@ -274,27 +302,20 @@
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 6: POLICY TOOLS
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: POLICY TOOLS -->
   <section class="page" id="page-policy">
     <div class="policy-grid">
-
-      <!-- Policy Brief -->
       <div class="panel policy-panel">
-        <div class="panel-header">
-          <div><h2 class="panel-title">AI Policy Brief Generator</h2><p class="panel-subtitle">Congressional-style briefs from live CDC data</p></div>
-          <span class="ai-badge-sm">GPT-4o-mini</span>
-        </div>
+        <div class="panel-header"><div><h2 class="panel-title">AI Policy Brief Generator</h2><p class="panel-subtitle">Congressional-style briefs from live CDC data</p></div><span class="ai-badge-sm">GPT-4o-mini</span></div>
         <div class="brief-topics">
-          <button class="topic-pill active" onclick="selectTopic(this,'overall HIV epidemic trends and progress toward Ending the HIV Epidemic goals')">Overall Trends</button>
-          <button class="topic-pill" onclick="selectTopic(this,'racial and ethnic disparities in HIV diagnoses and targeted interventions needed')">Racial Disparities</button>
-          <button class="topic-pill" onclick="selectTopic(this,'PrEP access gaps and states with the greatest unmet prevention need')">PrEP Gaps</button>
-          <button class="topic-pill" onclick="selectTopic(this,'federal funding gaps for PrEP and how to allocate resources to highest-burden states')">Funding</button>
-          <button class="topic-pill" onclick="selectTopic(this,'Ending the HIV Epidemic initiative progress and 2025 funding priorities')">EHE Priorities</button>
+          <button class="topic-pill active" onclick="selectTopic(this,'overall HIV epidemic trends and EHE goals')">Overall Trends</button>
+          <button class="topic-pill" onclick="selectTopic(this,'racial and ethnic disparities in HIV diagnoses')">Racial Disparities</button>
+          <button class="topic-pill" onclick="selectTopic(this,'PrEP access gaps and unmet prevention need')">PrEP Gaps</button>
+          <button class="topic-pill" onclick="selectTopic(this,'federal funding gaps for PrEP by state')">Funding</button>
+          <button class="topic-pill" onclick="selectTopic(this,'EHE initiative progress and 2025 priorities')">EHE Priorities</button>
         </div>
         <div class="brief-input-row">
-          <input type="text" id="briefTopic" class="brief-input" value="overall HIV epidemic trends and progress toward Ending the HIV Epidemic goals" placeholder="Enter a policy topic…"/>
+          <input type="text" id="briefTopic" class="brief-input" value="overall HIV epidemic trends and EHE goals"/>
           <button class="run-btn" id="briefBtn" onclick="generateBrief()">Generate →</button>
         </div>
         <div class="brief-output" id="briefOutput" style="display:none">
@@ -302,33 +323,20 @@
           <div class="brief-actions">
             <button class="outline-btn" onclick="copyBrief()">Copy</button>
             <button class="outline-btn" onclick="exportBriefPDF()">⬇ Export</button>
-            <span class="brief-note">For congressional briefings · grant applications · advocacy</span>
           </div>
         </div>
       </div>
-
-      <!-- News Feed -->
       <div class="panel policy-panel">
-        <div class="panel-header">
-          <div><h2 class="panel-title">HIV/AIDS Policy News</h2><p class="panel-subtitle">AI-curated recent developments</p></div>
-          <button class="outline-btn" onclick="loadNews()">↻ Refresh</button>
-        </div>
-        <div class="news-grid" id="newsGrid"><div class="loading-row">Loading news…</div></div>
+        <div class="panel-header"><div><h2 class="panel-title">HIV/AIDS Policy News</h2><p class="panel-subtitle">AI-curated recent developments</p></div><button class="outline-btn" onclick="loadNews()">↻ Refresh</button></div>
+        <div class="news-grid" id="newsGrid"><div class="loading-row">Loading…</div></div>
       </div>
-
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       PAGE 7: ASK THE DATA
-  ══════════════════════════════════════════════════ -->
+  <!-- PAGE: CHAT -->
   <section class="page" id="page-chat">
     <div class="chat-page-layout">
-      <div class="chat-intro">
-        <div class="chat-intro-icon">◈</div>
-        <h2 class="chat-intro-title">Ask the Data</h2>
-        <p class="chat-intro-sub">10 years of real U.S. HIV surveillance data (AIDSVu/CDC 2014–2023). Ask anything — trends, demographics, geographic patterns, PrEP coverage, or EHE progress. Powered by GPT-4o-mini + live MySQL queries.</p>
-      </div>
+      <div class="chat-intro"><div class="chat-intro-icon">◈</div><h2 class="chat-intro-title">Ask the Data</h2><p class="chat-intro-sub">10 years of real U.S. HIV surveillance (AIDSVu/CDC 2014–2023). Ask about trends, demographics, geography, PrEP, or EHE progress.</p></div>
       <div class="chat-suggestions-grid">
         <button class="suggestion-pill" onclick="askSuggestion(this)">Which state has the highest diagnosis rate?</button>
         <button class="suggestion-pill" onclick="askSuggestion(this)">How have MSM diagnoses changed since 2015?</button>
@@ -336,14 +344,11 @@
         <button class="suggestion-pill" onclick="askSuggestion(this)">Compare Black and White diagnosis rates</button>
         <button class="suggestion-pill" onclick="askSuggestion(this)">Which states have the lowest PrEP coverage?</button>
         <button class="suggestion-pill" onclick="askSuggestion(this)">Did COVID impact 2020 diagnoses?</button>
-        <button class="suggestion-pill" onclick="askSuggestion(this)">Show the 5 states with highest IDU rates</button>
-        <button class="suggestion-pill" onclick="askSuggestion(this)">How many infections prevented by PrEP growth?</button>
+        <button class="suggestion-pill" onclick="askSuggestion(this)">Top 5 states with highest IDU rates</button>
+        <button class="suggestion-pill" onclick="askSuggestion(this)">States improving most since 2017</button>
       </div>
       <div class="chat-window" id="chatWindow">
-        <div class="chat-msg assistant-msg">
-          <span class="msg-icon">◈</span>
-          <div class="msg-body"><p>Ready. I have access to real AIDSVu/CDC data (2014–2023) — diagnoses, PrEP, PNR ratios, demographics, and state-level detail. What would you like to know?</p></div>
-        </div>
+        <div class="chat-msg assistant-msg"><span class="msg-icon">◈</span><div class="msg-body"><p>Ready. Real AIDSVu/CDC data 2014–2023. What would you like to know?</p></div></div>
       </div>
       <div class="chat-input-row">
         <input type="text" id="chatInput" class="chat-input" placeholder="e.g. Which state had the biggest drop in diagnoses since 2019?"/>
@@ -351,16 +356,24 @@
       </div>
     </div>
   </section>
+</div><!-- /main-wrap -->
 
-</div><!-- end main-wrap -->
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobileNav">
+  <button class="mnav-btn active" onclick="showPage('overview',this)" data-page="overview"><span class="mnav-icon">⬡</span><span>Overview</span></button>
+  <button class="mnav-btn" onclick="showPage('map',this)"      data-page="map">     <span class="mnav-icon">◫</span><span>Map</span></button>
+  <button class="mnav-btn" onclick="showPage('disparity',this)" data-page="disparity"><span class="mnav-icon">◑</span><span>Disparity</span></button>
+  <button class="mnav-btn" onclick="showPage('forecast',this)" data-page="forecast"><span class="mnav-icon">⟋</span><span>Forecast</span></button>
+  <button class="mnav-btn" onclick="showPage('chat',this)"     data-page="chat">    <span class="mnav-icon">◈</span><span>Ask AI</span></button>
+</nav>
 
-<!-- STATE PROFILE MODAL -->
+<!-- STATE MODAL -->
 <div class="modal-overlay" id="stateModal" onclick="closeModal(event)">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModalDirect()">✕</button>
     <div class="modal-header">
       <div class="modal-state-tag" id="modalAbbr">—</div>
-      <div><h2 class="modal-state-name" id="modalName">—</h2><p class="modal-state-sub">HIV/AIDS State Profile · AIDSVu Data</p></div>
+      <div><h2 class="modal-state-name" id="modalName">—</h2><p class="modal-state-sub">HIV/AIDS State Profile · AIDSVu</p></div>
     </div>
     <div class="modal-stats-row" id="modalStatsRow"></div>
     <div class="modal-charts">
@@ -371,8 +384,19 @@
   </div>
 </div>
 
-<!-- PRINT OVERLAY (for PDF) -->
-<div id="printArea" style="display:none"></div>
+<!-- STORY OVERLAY -->
+<div class="story-overlay" id="storyOverlay" style="display:none">
+  <div class="story-box">
+    <button class="story-close" onclick="endStory()">✕ Exit Story</button>
+    <div class="story-progress"><div class="story-progress-fill" id="storyProgressFill"></div></div>
+    <div class="story-content" id="storyContent"></div>
+    <div class="story-nav">
+      <button class="story-prev" onclick="storyStep(-1)">← Back</button>
+      <span class="story-counter" id="storyCounter">1 / 6</span>
+      <button class="story-next" onclick="storyStep(1)">Next →</button>
+    </div>
+  </div>
+</div>
 
 <script src="/static/js/dashboard.js"></script>
 </body>

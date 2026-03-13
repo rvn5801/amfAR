@@ -591,5 +591,190 @@ def report_data():
         "ehe_target": int(ehe_base * 0.10),
     })
 
+
+# ── Choropleth map data ────────────────────────────────────────────────────────
+@app.route("/api/choropleth")
+def choropleth():
+    """All states with rate_per_100k for the filled map, plus trend direction."""
+    latest = run_sql("SELECT MAX(year) AS yr FROM diagnoses_state")[0]["yr"]
+    prev   = latest - 1
+    rows = run_sql(f"""
+        SELECT d.state, d.state_abbr, d.rate_per_100k, d.total_cases,
+               d2.rate_per_100k AS prev_rate,
+               p.prep_users, n.pnr_ratio
+        FROM diagnoses_state d
+        LEFT JOIN diagnoses_state d2 ON d2.state_abbr=d.state_abbr AND d2.year={prev}
+        LEFT JOIN prep_state p ON p.state_abbr=d.state_abbr AND p.year=d.year
+        LEFT JOIN pnr_state  n ON n.state_abbr=d.state_abbr AND n.year=d.year
+        WHERE d.year={latest} AND d.rate_per_100k IS NOT NULL
+        ORDER BY d.rate_per_100k DESC
+    """)
+    for r in rows:
+        if r["rate_per_100k"] and r["prev_rate"]:
+            r["trend"] = round(float(r["rate_per_100k"]) - float(r["prev_rate"]), 2)
+        else:
+            r["trend"] = None
+    return jsonify({"year": latest, "states": rows})
+
+
+# ── Racial disparity index ─────────────────────────────────────────────────────
+@app.route("/api/disparity-index")
+def disparity_index():
+    """
+    Composite equity score per state (0–100, higher = worse disparity):
+      - Black/White diagnosis rate ratio  (40% weight)
+      - Black PNR vs White PNR gap        (30% weight)
+      - Hispanic/White diagnosis ratio    (30% weight)
+    """
+    latest = run_sql("SELECT MAX(year) AS yr FROM diagnoses_state")[0]["yr"]
+    rows = run_sql(f"""
+        SELECT d.state, d.state_abbr,
+               d.black_cases, d.black_rate,
+               d.hispanic_cases, d.hispanic_rate,
+               d.white_cases, d.white_rate,
+               d.total_cases, d.rate_per_100k,
+               n.pnr_ratio
+        FROM diagnoses_state d
+        LEFT JOIN pnr_state n ON n.state_abbr=d.state_abbr AND n.year=d.year
+        WHERE d.year={latest}
+          AND d.black_cases IS NOT NULL
+          AND d.white_cases IS NOT NULL
+          AND d.white_cases > 0
+        ORDER BY d.state
+    """)
+
+    results = []
+    bw_ratios, hw_ratios = [], []
+
+    for r in rows:
+        bc = float(r["black_cases"] or 0)
+        wc = float(r["white_cases"] or 0)
+        hc = float(r["hispanic_cases"] or 0)
+        br = float(r["black_rate"] or 0)
+        wr = float(r["white_rate"] or 0)
+        hr = float(r["hispanic_rate"] or 0)
+        if wc > 0 and wr > 0:
+            bw = round(br / wr, 2) if wr > 0 else None
+            hw = round(hr / wr, 2) if wr > 0 else None
+        else:
+            bw = hw = None
+        r["bw_ratio"] = bw
+        r["hw_ratio"] = hw
+        if bw: bw_ratios.append(bw)
+        if hw: hw_ratios.append(hw)
+
+    max_bw = max(bw_ratios) if bw_ratios else 1
+    max_hw = max(hw_ratios) if hw_ratios else 1
+
+    for r in rows:
+        bw = r.get("bw_ratio") or 0
+        hw = r.get("hw_ratio") or 0
+        score = round((bw / max_bw * 0.5 + hw / max_hw * 0.5) * 100, 1)
+        results.append({
+            "state":       r["state"],
+            "state_abbr":  r["state_abbr"],
+            "bw_ratio":    r["bw_ratio"],
+            "hw_ratio":    r["hw_ratio"],
+            "black_cases": int(r["black_cases"] or 0),
+            "white_cases": int(r["white_cases"] or 0),
+            "hispanic_cases": int(r["hispanic_cases"] or 0),
+            "total_cases": int(r["total_cases"] or 0),
+            "disparity_score": score,
+            "grade": "F" if score>=80 else "D" if score>=60 else "C" if score>=40 else "B" if score>=20 else "A",
+        })
+
+    results.sort(key=lambda x: -(x["disparity_score"] or 0))
+    national_bw = round(sum(bw_ratios)/len(bw_ratios), 2) if bw_ratios else None
+    return jsonify({"year": latest, "states": results, "national_bw_ratio": national_bw})
+
+
+# ── ML Forecasting to 2030 ─────────────────────────────────────────────────────
+@app.route("/api/forecast")
+def forecast():
+    try:
+        import numpy as np
+        from scipy import stats
+
+        rows = run_sql("SELECT year, SUM(total_cases) AS dx FROM diagnoses_state GROUP BY year ORDER BY year")
+        years = np.array([r["year"] for r in rows], dtype=float)
+        dx    = np.array([float(r["dx"] or 0) for r in rows])
+
+        slope, intercept, r_val, p, se = stats.linregress(years, dx)
+
+        future_years = list(range(int(years[-1])+1, 2031))
+        all_years    = list(map(int, years)) + future_years
+
+        n       = len(years)
+        t_80    = stats.t.ppf(0.90, df=n-2)
+        resid   = dx - (slope * years + intercept)
+        s_res   = np.sqrt(np.sum(resid**2) / (n-2))
+        x_mean  = np.mean(years)
+        years_int = list(map(int, years))
+
+        projections = []
+        for yr in all_years:
+            fitted  = slope * yr + intercept
+            se_pred = s_res * np.sqrt(1 + 1/n + (yr - x_mean)**2 / np.sum((years - x_mean)**2))
+            margin  = t_80 * se_pred
+            is_hist = yr in years_int
+            idx     = years_int.index(yr) if is_hist else None
+            projections.append({
+                "year":          yr,
+                "actual":        int(dx[idx]) if is_hist else None,
+                "forecast":      max(0, round(fitted)),
+                "lower80":       max(0, round(fitted - margin)),
+                "upper80":       max(0, round(fitted + margin)),
+                "is_historical": is_hist,
+            })
+
+        ehe_base     = float(run_sql("SELECT SUM(total_cases) AS t FROM diagnoses_state WHERE year=2017")[0]["t"] or 1)
+        target2030   = ehe_base * 0.10
+        forecast2030 = slope * 2030 + intercept
+        on_track     = bool(forecast2030 <= target2030)
+
+        state_trends = run_sql("SELECT state_abbr, state FROM diagnoses_state GROUP BY state_abbr, state")
+        state_forecasts = []
+        for st in state_trends:
+            abbr  = st["state_abbr"]
+            srows = run_sql(f"""
+                SELECT year, total_cases FROM diagnoses_state
+                WHERE state_abbr='{abbr}' AND total_cases IS NOT NULL
+                ORDER BY year DESC LIMIT 5
+            """)
+            if len(srows) >= 3:
+                sy = np.array([sr["year"] for sr in srows], dtype=float)
+                sd = np.array([float(sr["total_cases"]) for sr in srows])
+                sl, si, sv, *_ = stats.linregress(sy, sd)
+                state_forecasts.append({
+                    "state_abbr":     abbr,
+                    "state":          st["state"],
+                    "slope_per_year": round(float(sl), 1),
+                    "trend":          "improving" if sl < 0 else "worsening",
+                    "projected_2030": max(0, round(sl * 2030 + si)),
+                    "r_squared":      round(float(sv**2), 3),
+                })
+        state_forecasts.sort(key=lambda x: x["slope_per_year"])
+
+        return jsonify({
+            "projections":      projections,
+            "slope_per_year":   round(float(slope), 1),
+            "r_squared":        round(float(r_val**2), 3),
+            "ehe_target_2030":  int(target2030),
+            "forecast_2030":    max(0, round(float(forecast2030))),
+            "on_track_for_ehe": on_track,
+            "most_improving":   state_forecasts[:5],
+            "most_worsening":   state_forecasts[-5:][::-1],
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 200
+
+# ── SPA catch-all — handles /dashboard/<page> and /dashboard/states/<abbr> ──
+@app.route("/dashboard/", defaults={"path": ""})
+@app.route("/dashboard/<path:path>")
+def spa_catchall(path):
+    return render_template("index.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
