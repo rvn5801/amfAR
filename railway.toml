@@ -2,7 +2,8 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python seed_db_clean.py && gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
-healthcheckPath = "/"
-healthcheckTimeout = 300
+startCommand = "gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+healthcheckPath = "/health"
+healthcheckTimeout = 600
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
