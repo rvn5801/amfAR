@@ -1,120 +1,208 @@
-<<<<<<< HEAD
 # HIV/AIDS Policy Intelligence Dashboard
 
-An AI-powered public health data dashboard built for the amfAR Data Analyst application.  
-Visualizes 15 years of U.S. HIV surveillance data with GPT-4o-powered natural language analysis.
+> An AI-powered public health analytics platform built with real CDC/AIDSVu surveillance data — developed as a portfolio project for a Data Analyst (Biostatistician/Web Developer) role at [amfAR, The Foundation for AIDS Research](https://www.amfar.org/).
 
-**Live Demo:** [your-url-here]
+![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey) ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange) ![OpenAI](https://img.shields.io/badge/GPT--4o--mini-AI--Powered-purple) ![Status](https://img.shields.io/badge/Status-Live-brightgreen)
 
 ---
 
-## What It Does
+## What This Is
 
-| Feature | Tech |
-|---|---|
-| Interactive charts (trend, demographics, state map) | JavaScript + Chart.js |
-| Surveillance data storage & querying | Python + MySQL |
-| REST API serving all data endpoints | Python + Flask |
-| AI auto-generated policy insights (on page load) | OpenAI GPT-4o-mini |
-| Natural language Q&A against live data | OpenAI GPT-4o-mini + MySQL |
-| One-click deployment | Railway.app |
+A full-stack policy intelligence dashboard that turns 10 years of U.S. HIV surveillance data into actionable policy insights. It combines epidemiological analysis, machine learning forecasting, racial equity scoring, and AI-generated policy tools into a single research platform.
 
-### AI Capabilities
-- **Auto-Insights Panel**: On page load, GPT-4o-mini analyzes the database and generates 3 policy-oriented insights covering national trends, demographic disparities, and geographic concentration — including supporting data tables.
-- **Chat Interface**: Ask any question in plain English. The AI writes a MySQL query, executes it against live data, returns results + a policy interpretation. The SQL is shown so you can inspect exactly what ran.
+Built to demonstrate real-world biostatistician + web developer skills:
+
+- Statistical modeling (linear regression with confidence bands, PrEP impact simulation)
+- Geospatial visualization (D3 choropleth map of all 50 states)
+- Equity analysis (composite Black/White disparity index per state)
+- AI integration (GPT-4o-mini for policy briefs, NL-to-SQL chat, news curation)
+- Full-stack engineering (Flask REST API, MySQL, vanilla JS SPA with URL routing)
+
+---
+
+## Features
+
+| Page | Description |
+|------|-------------|
+| **Overview** | National trend + YoY toggle, PrEP uptake, transmission breakdown, race/age demographics, AI policy insights |
+| **US Choropleth Map** | D3 filled state map — switch between diagnosis rate, total cases, PNR ratio. Click any state for full profile modal |
+| **Racial Disparity Index** | Composite equity score per state — Black/White rate ratio, scatter plot, AI commentary |
+| **2030 ML Forecast** | Linear regression on 2014–2023 data with 80% confidence bands, EHE gap analysis, per-state trajectories |
+| **EHE Tracker** | Ending the HIV Epidemic initiative — 90% reduction goal, animated progress bar, yearly trend |
+| **Funding Gap** | State-by-state PrEP funding gap calculator ($4,200/patient CDC estimate) — CRITICAL / HIGH / MODERATE tiers |
+| **Epidemic Simulator** | Model PrEP expansion impact — sliders for coverage % and target year, AI scenario commentary |
+| **State Explorer** | Ranked bar chart (clickable → modal), side-by-side state comparison with AI analysis |
+| **Policy Tools** | Congressional-style policy brief generator + AI-curated HIV/AIDS news feed |
+| **Ask the Data** | Natural language → SQL → answer, with live data tables and query display |
+
+**Cross-cutting:** Dark/light mode toggle, URL routing (shareable links per page/state), animated 6-slide data story mode, mobile-responsive bottom nav, multi-page PDF export.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Browser (SPA)                        │
+│  Vanilla JS + Chart.js 4 + D3.js 7 + jsPDF             │
+│  10-page sidebar app · History API routing              │
+└──────────────────────┬──────────────────────────────────┘
+                       │ REST / JSON
+┌──────────────────────▼──────────────────────────────────┐
+│                Flask API  (app.py)                      │
+│  25 endpoints · NumPy/SciPy ML · OpenAI SDK             │
+└───────────┬──────────────────────────┬──────────────────┘
+            │                          │
+┌───────────▼──────────┐  ┌───────────▼──────────────────┐
+│   MySQL 8 Database   │  │      OpenAI GPT-4o-mini       │
+│   hiv_dashboard      │  │  Insights · Briefs · Chat     │
+│   3 tables · 1,560   │  │  Simulator commentary · News  │
+│   rows · real data   │  └──────────────────────────────┘
+└──────────────────────┘
+```
+
+### Database Schema
+
+**`diagnoses_state`** — State-level HIV new diagnoses (2014–2023)
+```
+year, state, state_abbr, total_cases, rate_per_100k,
+male_cases, female_cases,
+black_cases, black_rate, hispanic_cases, hispanic_rate,
+white_cases, white_rate, asian_cases,
+age_13_24, age_25_34, age_35_44, age_45_54, age_55_64, age_65plus,
+msm_cases, msm_pct, idu_cases, idu_pct,
+heterosexual_cases, heterosexual_pct
+```
+
+**`prep_state`** — State-level PrEP uptake (2014–2023)
+```
+year, state, state_abbr, prep_users, prep_rate
+```
+
+**`pnr_state`** — PrEP-to-Need Ratio by state (2014–2023)
+```
+year, state, state_abbr, pnr_ratio
+```
+
+Suppression codes (`-9`, `-8`, `-7`, `0`) stored as `NULL`.
+
+---
+
+## Data Sources
+
+| Dataset | Source | Years | Rows |
+|---------|--------|-------|------|
+| HIV New Diagnoses by State | [AIDSVu / CDC NHSS](https://aidsvu.org/) | 2014–2023 | 520 |
+| PrEP Uptake by State | [AIDSVu](https://aidsvu.org/services/map-data-download/) | 2014–2023 | 520 |
+| PrEP-to-Need Ratio | [AIDSVu](https://aidsvu.org/) | 2014–2023 | 520 |
+
+Data was downloaded as XLSX files from AIDSVu, cleaned via `preprocess.py`, and loaded into MySQL via `seed_db_clean.py`. In production at amfAR, these would connect directly to PPO databases — the ETL architecture is identical.
 
 ---
 
 ## Tech Stack
 
-```
-Backend:   Python 3.11, Flask, MySQL Connector
-Database:  MySQL 8
-AI:        OpenAI GPT-4o-mini
-Frontend:  Vanilla JavaScript, Chart.js 4, Chart.js Annotation Plugin
-Fonts:     Playfair Display, DM Mono, DM Sans (Google Fonts)
-Deploy:    Railway.app (Python + MySQL services)
-```
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.10+, Flask 3.0 |
+| Database | MySQL 8.0 |
+| ML / Stats | NumPy, SciPy (linear regression, prediction intervals) |
+| AI | OpenAI GPT-4o-mini |
+| Frontend | Vanilla JavaScript (ES2020), Chart.js 4, D3.js 7 |
+| Mapping | D3-geo + TopoJSON (us-atlas) |
+| PDF Export | jsPDF 2.5 + html2canvas 1.4 |
+| Deployment | Railway (Gunicorn) |
 
 ---
 
-## Local Setup (30 minutes)
+## Local Setup
 
 ### Prerequisites
-- Python 3.10+
-- MySQL 8 running locally
-- OpenAI API key (platform.openai.com → API Keys)
 
-### 1. Clone & Install
+- Python 3.10+
+- MySQL 8.0 running locally
+- An OpenAI API key
+- AIDSVu XLSX data files (see Data Sources above)
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/hiv-policy-dashboard
 cd hiv-policy-dashboard
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+pip install numpy scipy openpyxl pandas
 ```
 
-### 2. Configure Environment
+### 2. Create MySQL database and user
+
+```sql
+CREATE DATABASE hiv_dashboard CHARACTER SET utf8mb4;
+CREATE USER 'hiv_user'@'localhost' IDENTIFIED BY 'hiv_pass_2025';
+GRANT ALL PRIVILEGES ON hiv_dashboard.* TO 'hiv_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 3. Configure environment
+
+Create a `.env` file in the project root:
+
+```env
+OPENAI_API_KEY=sk-your-key-here
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=hiv_user
+DB_PASSWORD=hiv_pass_2025
+DB_NAME=hiv_dashboard
+```
+
+### 4. Load the data
+
+Place AIDSVu XLSX files in `data/raw/`, then:
 
 ```bash
-cp .env.example .env
-# Edit .env with your values:
-#   OPENAI_API_KEY=sk-...
-#   DB_PASSWORD=your-mysql-root-password
+python preprocess.py        # XLSX → clean CSVs in data/clean/
+python seed_db_clean.py     # CSVs → MySQL
 ```
 
-### 3. Seed the Database
+Expected: 520 diagnosis rows, 520 PrEP rows, 520 PNR rows.
 
-```bash
-python seed_db.py
-# Creates hiv_dashboard database with 3 tables
-# Inserts ~50k rows of realistic HIV surveillance data
-# Takes ~30 seconds
-```
-
-### 4. Run
+### 5. Run
 
 ```bash
 flask run
-# Open http://localhost:5000
 ```
+
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
 
-## Deploy to Railway (15 minutes, free tier)
+## API Reference
 
-Railway gives you a live HTTPS URL — this is what you send to employers.
+All endpoints return JSON. Base URL: `http://localhost:5000`
 
-### Step 1 — Create Railway account
-Go to [railway.app](https://railway.app) and sign up with GitHub.
-
-### Step 2 — Add MySQL service
-- New Project → Add a Service → Database → MySQL
-- Once provisioned, click the MySQL service → Variables tab
-- Copy: `MYSQL_HOST`, `MYSQLPORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
-
-### Step 3 — Deploy the app
-- New Service → GitHub Repo → select this repo
-- Go to Variables tab, add:
-  ```
-  OPENAI_API_KEY   = sk-your-key
-  DB_HOST          = (value of MYSQL_HOST from step 2)
-  DB_PORT          = (value of MYSQLPORT)
-  DB_USER          = (value of MYSQL_USER)
-  DB_PASSWORD      = (value of MYSQL_PASSWORD)
-  DB_NAME          = railway
-  ```
-- Railway auto-deploys on push. First deploy takes ~3 minutes.
-
-### Step 4 — Seed the remote database
-In the Railway app service terminal (or locally with remote DB env vars):
-```bash
-DB_HOST=... DB_PORT=... DB_USER=... DB_PASSWORD=... DB_NAME=railway python seed_db.py
-```
-
-### Step 5 — Get your URL
-Settings → Domains → Generate Domain → you get `https://something.railway.app`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/summary-stats` | Topbar KPIs — diagnoses, PrEP, EHE %, funding gap |
+| GET | `/api/national-trend` | Year-by-year national diagnosis totals |
+| GET | `/api/transmission` | Transmission category breakdown |
+| GET | `/api/demographics` | Race/ethnicity case counts |
+| GET | `/api/age-groups` | Age group distribution |
+| GET | `/api/state-prevalence` | All states sorted by rate per 100k |
+| GET | `/api/choropleth` | State data for D3 map (rate, cases, PNR, normalized) |
+| GET | `/api/prep-trend` | Annual PrEP uptake + diagnoses dual-axis |
+| GET | `/api/pnr-bottom` | Bottom 10 states by PNR ratio |
+| GET | `/api/disparity-index` | Composite equity score per state + AI commentary |
+| GET | `/api/ehe-progress` | EHE initiative yearly progress toward 90% goal |
+| GET | `/api/funding-gap` | PrEP funding gap per state in dollars |
+| GET | `/api/forecast` | ML regression → 2030 with confidence bands + state trajectories |
+| GET | `/api/state-profile/<abbr>` | Full profile for one state (trend, demographics, PrEP) |
+| GET | `/api/compare-states?a=FL&b=CA` | Side-by-side state comparison + AI commentary |
+| GET | `/api/news` | GPT-4o-mini curated HIV/AIDS policy news |
+| GET | `/api/report-data` | Aggregated data bundle for PDF export |
+| GET | `/api/ai-insights` | 3 AI-generated policy insight cards |
+| POST | `/api/policy-brief` | `{"topic": "..."}` → congressional-style brief |
+| POST | `/api/chat` | `{"question": "..."}` → NL-to-SQL → answer + data table |
+| POST | `/api/simulate` | `{"prep_increase_pct": 20, "target_year": 2030}` → epidemic projection |
 
 ---
 
@@ -122,45 +210,50 @@ Settings → Domains → Generate Domain → you get `https://something.railway.
 
 ```
 hiv-policy-dashboard/
-├── app.py              # Flask app, all API routes, OpenAI integration
-├── seed_db.py          # One-time database seeding script
-├── requirements.txt
-├── railway.toml        # Deployment config
-├── .env.example        # Environment variable template
+├── app.py                  # Flask application — all 25 API routes
+├── preprocess.py           # AIDSVu XLSX → clean CSV pipeline
+├── seed_db_clean.py        # CSV → MySQL loader with schema creation
+├── requirements.txt        # pip dependencies
+├── Procfile                # gunicorn entry point for Railway
+├── railway.toml            # Railway deployment config
+├── .env                    # not committed — see setup above
+├── data/
+│   ├── raw/                # original AIDSVu XLSX files (not committed)
+│   └── clean/              # preprocessed CSVs (not committed)
 ├── templates/
-│   └── index.html      # Single-page dashboard
+│   └── index.html          # SPA shell — all 10 pages, story overlay, modals
 └── static/
-    ├── css/style.css   # Full custom CSS (no framework)
-    └── js/dashboard.js # Chart.js charts + AI chat logic
+    ├── css/style.css       # full custom dark/light theme (~600 lines)
+    └── js/dashboard.js     # charts, D3 map, AI features, URL routing (~550 lines)
 ```
 
-## API Endpoints
+---
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/summary-stats` | Latest year aggregate stats |
-| `GET /api/national-trend` | Annual diagnoses 2008–2022 |
-| `GET /api/transmission` | Breakdown by transmission category |
-| `GET /api/demographics` | Breakdown by race/ethnicity |
-| `GET /api/age-groups` | Breakdown by age group |
-| `GET /api/state-prevalence` | HIV rate per 100k by state |
-| `GET /api/ai-insights` | 3 AI-generated policy insights |
-| `POST /api/chat` | Natural language question → SQL → answer |
+## Methodology Notes
+
+**PrEP Funding Gap** — Additional patients needed to reach PNR target × $4,200/year (CDC generic PrEP cost estimate). States already at target show $0.
+
+**EHE Progress** — Baseline year 2017. Target = 90% reduction by 2030. Progress = (baseline − current) / (baseline × 0.9) × 100.
+
+**Disparity Score** — Weighted composite: Black/White rate ratio (50%) + Hispanic/White ratio (20%) + Black share deviation from national average (30%).
+
+**Forecast Confidence Bands** — 80% prediction intervals using t-distribution with n−2 degrees of freedom. Reflect uncertainty about individual future observations, not just the mean trajectory.
+
+**Why linear regression, not ARIMA or LSTM?** — Ten years of annual data (10 points per state) is insufficient for ARIMA's stationarity requirements or LSTM's training needs. Linear regression with prediction intervals is statistically honest at this data volume and produces interpretable results for a policy audience.
+
+**Suppressed Data** — CDC suppresses counts < 5 cases. These values are stored as NULL and excluded from rate calculations, disparity scoring, and forecasts.
 
 ---
 
-## Data Sources
+## Disclaimer
 
-Data is modeled on the CDC's HIV Surveillance Report and mirrors published national/state statistics:
-- CDC HIV Surveillance Reports: cdc.gov/hiv/library/reports
-- AIDSVu: aidsvu.org/resources
-
-This dashboard uses realistic synthetic data for demonstration. All trends, demographic distributions, and geographic patterns reflect published CDC figures.
+This dashboard uses publicly available surveillance data for educational and portfolio purposes. All analyses reflect the author's methodology and do not represent official positions of CDC, AIDSVu, or amfAR. HIV surveillance data has known limitations including diagnosis delays, testing access disparities, and jurisdictional reporting variation.
 
 ---
 
-*Built as a portfolio demonstration for the amfAR Data Analyst (Biostatistician / Web Developer) position.*  
-*Stack: Python · MySQL · JavaScript · OpenAI GPT-4o · Flask · Chart.js*
-=======
-# amfAR
->>>>>>> 3390fc2100b2aaf2059f03eea66cf21ce3daf493
+## Author
+
+**Venkata Narayana Redrouthu**  
+---
+
+*Data: AIDSVu · CDC National HIV Surveillance System (NHSS) · 2014–2023*
