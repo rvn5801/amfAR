@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # HIV/AIDS Policy Intelligence Dashboard
 
 An AI-powered public health data dashboard built for the amfAR Data Analyst application.  
@@ -160,3 +161,6 @@ This dashboard uses realistic synthetic data for demonstration. All trends, demo
 
 *Built as a portfolio demonstration for the amfAR Data Analyst (Biostatistician / Web Developer) position.*  
 *Stack: Python · MySQL · JavaScript · OpenAI GPT-4o · Flask · Chart.js*
+=======
+# amfAR
+>>>>>>> 3390fc2100b2aaf2059f03eea66cf21ce3daf493
