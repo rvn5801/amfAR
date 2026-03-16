@@ -1,8 +1,8 @@
 # Ignore environment variables
 .env
 
-# # Ignore data files
-# data/
+# Ignore data files
+data/
 
 # Ignore Python cache
 __pycache__/
