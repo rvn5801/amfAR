@@ -7,13 +7,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-cfg = {
-    "host":     os.getenv("DB_HOST", "localhost"),
-    "port":     int(os.getenv("DB_PORT", 3306)),
-    "user":     os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "hiv_dashboard"),
-}
+def _parse_db_url(url):
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    return {
+        "host":     p.hostname,
+        "port":     p.port or 3306,
+        "user":     p.username,
+        "password": p.password or "",
+        "database": (p.path or "/railway").lstrip("/"),
+    }
+
+_db_url = os.getenv("DATABASE_URL") or os.getenv("MYSQL_PRIVATE_URL") or os.getenv("MYSQL_URL")
+if _db_url and "mysql" in _db_url:
+    cfg = _parse_db_url(_db_url)
+else:
+    cfg = {
+        "host":     os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "localhost",
+        "port":     int(os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or 3306),
+        "user":     os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root",
+        "password": os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or "",
+        "database": os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "hiv_dashboard",
+    }
+
+print(f"Connecting to: {cfg['host']}:{cfg['port']} db={cfg['database']}")
 
 CLEAN_DIR = os.path.join(os.path.dirname(__file__), "data", "clean")
 
@@ -21,7 +38,7 @@ CLEAN_DIR = os.path.join(os.path.dirname(__file__), "data", "clean")
 def safe_int(val):
     try:
         v = int(float(str(val).replace(",", "")))
-        return v if v > 0 else None   # negatives and 0 → NULL
+        return v if v >= 0 else None
     except:
         return None
 
@@ -29,7 +46,7 @@ def safe_int(val):
 def safe_float(val):
     try:
         v = float(str(val).replace(",", ""))
-        return round(v, 4) if v > 0 else None   # negatives and 0 → NULL
+        return round(v, 4) if v >= 0 else None
     except:
         return None
 
@@ -155,13 +172,13 @@ def main():
                 safe_int(g(row, c_het_c)),
                 safe_float(g(row, c_het_p)),
             ))
-        print(f"   newdx_{year}.csv — {len(df)} rows")
+        print(f"  ✓ newdx_{year}.csv — {len(df)} rows")
 
     cur.executemany("""
         INSERT INTO diagnoses_state VALUES
         (NULL,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, dx_rows)
-    print(f"   {len(dx_rows)} diagnosis rows inserted")
+    print(f"  {len(dx_rows)} diagnosis rows inserted")
 
     # ── Load prep CSVs ───────────────────────────────────────────────────
     print("\nLoading PrEP data...")
@@ -185,13 +202,13 @@ def main():
                 safe_int(row[c_users] if c_users else None),
                 safe_float(row[c_rate] if c_rate else None),
             ))
-        print(f"   prep_{year}.csv — {len(df)} rows")
+        print(f"  ✓ prep_{year}.csv — {len(df)} rows")
 
     cur.executemany(
         "INSERT INTO prep_state VALUES (NULL,%s,%s,%s,%s,%s)",
         prep_rows
     )
-    print(f"   {len(prep_rows)} PrEP rows inserted")
+    print(f"  {len(prep_rows)} PrEP rows inserted")
 
     # ── Load pnr CSVs ────────────────────────────────────────────────────
     print("\nLoading PNR data...")
@@ -219,7 +236,7 @@ def main():
         "INSERT INTO pnr_state VALUES (NULL,%s,%s,%s,%s)",
         pnr_rows
     )
-    print(f"   {len(pnr_rows)} PNR rows inserted")
+    print(f"  ✅ {len(pnr_rows)} PNR rows inserted")
 
     conn.commit()
     cur.close()
@@ -227,7 +244,7 @@ def main():
 
     print(f"""
 {'='*50}
-🎉 Clean data loaded into MySQL successfully!
+ Clean data loaded into MySQL successfully!
    diagnoses_state : {len(dx_rows)} rows
    prep_state      : {len(prep_rows)} rows
    pnr_state       : {len(pnr_rows)} rows
