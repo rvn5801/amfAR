@@ -61,9 +61,14 @@ def find_col(df, *keywords):
 
 
 def main():
-    conn = mysql.connector.connect(**cfg)
+    # Connect without specifying database first, then create/use it
+    connect_cfg = {**cfg}
+    db_name = connect_cfg.pop("database", "railway")
+    conn = mysql.connector.connect(**connect_cfg)
     cur = conn.cursor()
-    cur.execute("USE hiv_dashboard")
+    cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4")
+    cur.execute(f"USE `{db_name}`")
+    print(f"Using database: {db_name}")
 
     # ── Recreate tables ──────────────────────────────────────────────────
     print("Recreating tables...")
@@ -236,7 +241,7 @@ def main():
         "INSERT INTO pnr_state VALUES (NULL,%s,%s,%s,%s)",
         pnr_rows
     )
-    print(f"  ✅ {len(pnr_rows)} PNR rows inserted")
+    print(f"  {len(pnr_rows)} PNR rows inserted")
 
     conn.commit()
     cur.close()
@@ -244,7 +249,7 @@ def main():
 
     print(f"""
 {'='*50}
- Clean data loaded into MySQL successfully!
+🎉 Clean data loaded into MySQL successfully!
    diagnoses_state : {len(dx_rows)} rows
    prep_state      : {len(prep_rows)} rows
    pnr_state       : {len(pnr_rows)} rows
