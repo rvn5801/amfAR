@@ -4,6 +4,10 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey) ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange) ![OpenAI](https://img.shields.io/badge/GPT--4o--mini-AI--Powered-purple) ![Status](https://img.shields.io/badge/Status-Live-brightgreen)
 
+**🔴 [Live Dashboard](https://amfar-production.up.railway.app)** 
+
+![Dashboard Screenshot]("C:\Users\alone\OneDrive\Desktop\amFAR\dashboard.png")
+
 ---
 
 ## What This Is
@@ -55,10 +59,10 @@ Built to demonstrate real-world biostatistician + web developer skills:
             │                          │
 ┌───────────▼──────────┐  ┌───────────▼──────────────────┐
 │   MySQL 8 Database   │  │      OpenAI GPT-4o-mini       │
-│   hiv_dashboard      │  │  Insights · Briefs · Chat     │
-│   3 tables · 1,560   │  │  Simulator commentary · News  │
-│   rows · real data   │  └──────────────────────────────┘
-└──────────────────────┘
+│   3 tables · 1,560   │  │  Insights · Briefs · Chat     │
+│   rows · real data   │  │  Simulator · News · SQL       │
+└──────────────────────┘  └──────────────────────────────┘
+         Deployed on Railway · CI/CD via GitHub
 ```
 
 ### Database Schema
@@ -105,13 +109,13 @@ Data was downloaded as XLSX files from AIDSVu, cleaned via `preprocess.py`, and 
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python 3.10+, Flask 3.0 |
-| Database | MySQL 8.0 |
-| ML / Stats | NumPy, SciPy (linear regression, prediction intervals) |
+| Database | MySQL 8.0 (Railway) |
+| ML / Stats | NumPy 1.26.4, SciPy 1.13.1 (linear regression, prediction intervals) |
 | AI | OpenAI GPT-4o-mini |
 | Frontend | Vanilla JavaScript (ES2020), Chart.js 4, D3.js 7 |
 | Mapping | D3-geo + TopoJSON (us-atlas) |
 | PDF Export | jsPDF 2.5 + html2canvas 1.4 |
-| Deployment | Railway (Gunicorn) |
+| Deployment | Railway · Gunicorn · GitHub CI/CD |
 
 ---
 
@@ -127,10 +131,9 @@ Data was downloaded as XLSX files from AIDSVu, cleaned via `preprocess.py`, and 
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/hiv-policy-dashboard
-cd hiv-policy-dashboard
+git clone https://github.com/rvn5801/amFAR
+cd amFAR
 pip install -r requirements.txt
-pip install numpy scipy openpyxl pandas
 ```
 
 ### 2. Create MySQL database and user
@@ -178,7 +181,7 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ## API Reference
 
-All endpoints return JSON. Base URL: `http://localhost:5000`
+All endpoints return JSON. Base URL: `https://amfar-production.up.railway.app`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -209,12 +212,11 @@ All endpoints return JSON. Base URL: `http://localhost:5000`
 ## Project Structure
 
 ```
-hiv-policy-dashboard/
+amFAR/
 ├── app.py                  # Flask application — all 25 API routes
 ├── preprocess.py           # AIDSVu XLSX → clean CSV pipeline
 ├── seed_db_clean.py        # CSV → MySQL loader with schema creation
 ├── requirements.txt        # pip dependencies
-├── Procfile                # gunicorn entry point for Railway
 ├── railway.toml            # Railway deployment config
 ├── .env                    # not committed — see setup above
 ├── data/
@@ -223,8 +225,8 @@ hiv-policy-dashboard/
 ├── templates/
 │   └── index.html          # SPA shell — all 10 pages, story overlay, modals
 └── static/
-    ├── css/style.css       # full custom dark/light theme (~600 lines)
-    └── js/dashboard.js     # charts, D3 map, AI features, URL routing (~550 lines)
+    ├── css/style.css       # full custom dark/light theme
+    └── js/dashboard.js     # charts, D3 map, AI features, URL routing
 ```
 
 ---
@@ -254,6 +256,9 @@ This dashboard uses publicly available surveillance data for educational and por
 ## Author
 
 **Venkata Narayana Redrouthu**  
+Portfolio project for amfAR Data Analyst (Biostatistician / Web Developer) application · March 2026  
+GitHub: [rvn5801](https://github.com/rvn5801)
+
 ---
 
 *Data: AIDSVu · CDC National HIV Surveillance System (NHSS) · 2014–2023*
