@@ -9,15 +9,45 @@ load_dotenv()
 
 app = Flask(__name__)
 
-DB_CONFIG = {
-    "host":     os.getenv("DB_HOST", "localhost"),
-    "port":     int(os.getenv("DB_PORT", 3306)),
-    "user":     os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "hiv_dashboard"),
-}
+def _parse_db_url(url):
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    return {
+        "host":     p.hostname,
+        "port":     p.port or 3306,
+        "user":     p.username,
+        "password": p.password or "",
+        "database": (p.path or "/railway").lstrip("/"),
+    }
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_db_url = os.getenv("DATABASE_URL") or os.getenv("MYSQL_PRIVATE_URL") or os.getenv("MYSQL_URL")
+if _db_url and "mysql" in _db_url:
+    DB_CONFIG = _parse_db_url(_db_url)
+else:
+    DB_CONFIG = {
+        "host":     os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "localhost",
+        "port":     int(os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or 3306),
+        "user":     os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root",
+        "password": os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or "",
+        "database": os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "railway",
+    }
+
+_openai_key = os.getenv("OPENAI_API_KEY", "")
+openai_client = OpenAI(api_key=_openai_key) if _openai_key else None
+
+def ai_complete(messages, max_tokens=500):
+    """Wrapper that returns None gracefully if OpenAI not configured."""
+    if not openai_client:
+        return None
+    try:
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=max_tokens
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as e:
+        return f"AI unavailable: {e}"
 
 
 def get_db():
@@ -66,6 +96,18 @@ Return ONLY valid JSON, no markdown, no code blocks:
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/health")
+def health():
+    """Lightweight healthcheck — does not require DB to be seeded."""
+    import os
+    try:
+        run_sql("SELECT 1")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {e}"
+    return {"status": "ok", "db": db_status, "port": os.getenv("PORT", "not set")}, 200
 
 
 @app.route("/api/national-trend")
