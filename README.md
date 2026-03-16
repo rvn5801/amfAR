@@ -4,9 +4,9 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey) ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange) ![OpenAI](https://img.shields.io/badge/GPT--4o--mini-AI--Powered-purple) ![Status](https://img.shields.io/badge/Status-Live-brightgreen)
 
-**🔴 [Live Dashboard](https://amfar-production.up.railway.app)** 
+** [Live Dashboard](https://amfar-production.up.railway.app)** 
 
-![Dashboard Screenshot]("C:\Users\alone\OneDrive\Desktop\amFAR\dashboard.png")
+![Dashboard Screenshot](dashboard.png)
 
 ---
 
@@ -140,7 +140,7 @@ pip install -r requirements.txt
 
 ```sql
 CREATE DATABASE hiv_dashboard CHARACTER SET utf8mb4;
-CREATE USER 'hiv_user'@'localhost' IDENTIFIED BY 'hiv_pass_2025';
+CREATE USER 'hiv_user'@'localhost' IDENTIFIED BY '....';
 GRANT ALL PRIVILEGES ON hiv_dashboard.* TO 'hiv_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
@@ -154,7 +154,7 @@ OPENAI_API_KEY=sk-your-key-here
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=hiv_user
-DB_PASSWORD=hiv_pass_2025
+DB_PASSWORD=....
 DB_NAME=hiv_dashboard
 ```
 
@@ -164,7 +164,7 @@ Place AIDSVu XLSX files in `data/raw/`, then:
 
 ```bash
 python preprocess.py        # XLSX → clean CSVs in data/clean/
-python seed_db_clean.py     # CSVs → MySQL
+python seed_db.py     # CSVs → MySQL
 ```
 
 Expected: 520 diagnosis rows, 520 PrEP rows, 520 PNR rows.
@@ -215,7 +215,7 @@ All endpoints return JSON. Base URL: `https://amfar-production.up.railway.app`
 amFAR/
 ├── app.py                  # Flask application — all 25 API routes
 ├── preprocess.py           # AIDSVu XLSX → clean CSV pipeline
-├── seed_db_clean.py        # CSV → MySQL loader with schema creation
+├── seed_db.py        # CSV → MySQL loader with schema creation
 ├── requirements.txt        # pip dependencies
 ├── railway.toml            # Railway deployment config
 ├── .env                    # not committed — see setup above
