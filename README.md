@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey) ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange) ![OpenAI](https://img.shields.io/badge/GPT--4o--mini-AI--Powered-purple) ![Status](https://img.shields.io/badge/Status-Live-brightgreen)
 
-** [Live Dashboard](https://amfar-production.up.railway.app)** 
+[Live Dashboard](https://amfar-production.up.railway.app)
 
 ![Dashboard Screenshot](dashboard.png)
 
